@@ -6,8 +6,10 @@ export default async function handler(req, res) {
 
   try {
     const { userId } = req.body || {};
-    if (typeof userId !== "number") {
-      return res.status(400).json({ error: "userId must be a number" });
+    const parsedUserId = Number(userId);
+
+    if (!Number.isInteger(parsedUserId)) {
+      return res.status(400).json({ error: "userId must be a valid integer" });
     }
 
     const db = await getDb();
