@@ -7,14 +7,12 @@ export default async function handler(req, res) {
   try {
     let { display_name, amount } = req.body || {};
 
-    // Validate display_name
     if (!display_name || typeof display_name !== "string") {
       return res.status(400).json({ error: "display_name is required" });
     }
 
     display_name = display_name.trim();
 
-    // Validate amount
     const parsedAmount = Number(amount);
     if (!Number.isFinite(parsedAmount)) {
       return res.status(400).json({ error: "amount must be a valid number" });
@@ -23,7 +21,6 @@ export default async function handler(req, res) {
     const db = await getDb();
     const users = db.collection("economy");
 
-    // Case-insensitive exact match on display_name
     const query = {
       display_name: { $regex: `^${display_name}$`, $options: "i" }
     };
@@ -32,7 +29,6 @@ export default async function handler(req, res) {
       $inc: { money: parsedAmount },
       $setOnInsert: {
         display_name: display_name,
-        money: 1000,
         job: "None",
         daily_income: 0,
         inventory: [],
