@@ -1,7 +1,7 @@
 import { getDb, requireApiKey, onlyPost } from "./_mongo.js";
 
 export default async function handler(req, res) {
-  console.log("==== /get USER CALLED ====");
+  console.log("==== /getByName CALLED ====");
 
   if (!onlyPost(req, res)) {
     console.log("❌ Method not allowed:", req.method);
@@ -14,23 +14,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    let { guildid, id } = req.body || {};
+    let { name } = req.body || {};
 
-    console.log("📥 Raw body:", req.body);
-    console.log("📥 Raw guildid:", guildid, "type:", typeof guildid);
-    console.log("📥 Raw id:", id, "type:", typeof id);
+    console.log("📥 Raw name:", name, "type:", typeof name);
 
-    if (guildid == null || id == null) {
-      console.log("❌ Missing guildid or id");
-      return res.status(400).json({ error: "guildid and id are required" });
+    if (!name || typeof name !== "string") {
+      console.log("❌ Missing or invalid name");
+      return res.status(400).json({ error: "name is required" });
     }
 
-    // FORCE STRING (CRITICAL)
-    guildid = String(guildid);
-    id = String(id);
+    // Normalize
+    name = name.trim();
 
-    console.log("🔄 Parsed guildid:", guildid, "type:", typeof guildid);
-    console.log("🔄 Parsed id:", id, "type:", typeof id);
+    console.log("🔍 Normalized name:", name);
 
     const db = await getDb();
     console.log("✅ MongoDB connected");
@@ -38,25 +34,18 @@ export default async function handler(req, res) {
     const users = db.collection("economy");
     console.log("📦 Using collection: economy");
 
-    console.log("🔍 Querying with:", {
-      guildid: guildid,
-      id: id
-    });
+    // Case-insensitive exact match
+    const query = {
+      name: { $regex: `^${name}$`, $options: "i" }
+    };
 
-    const user = await users.findOne({
-      guildid: guildid,
-      id: id
-    });
+    console.log("🔎 Query:", query);
 
-    console.log("📤 Query result:", user);
+    const user = await users.findOne(query);
 
-    if (!user) {
-      console.log("⚠️ User NOT FOUND");
-    } else {
-      console.log("✅ User FOUND, money:", user.money);
-    }
+    console.log("📤 Query result:", user || "NOT FOUND");
 
-    console.log("==== /get USER END ====");
+    console.log("==== /getByName END ====");
     return res.json(user || null);
 
   } catch (e) {
