@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     }
 
     const db = await getDb();
-    const users = db.collection("users");
+    const users = db.collection("economy");
 
     const user = await users.findOne({
       guildid: parsedGuildId,
