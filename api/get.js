@@ -1,7 +1,7 @@
 import { getDb, requireApiKey, onlyPost } from "./_mongo.js";
 
 export default async function handler(req, res) {
-  console.log("==== /getByName CALLED ====");
+  console.log("==== /getByDisplayName CALLED ====");
 
   if (!onlyPost(req, res)) {
     console.log("❌ Method not allowed:", req.method);
@@ -14,19 +14,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    let { name } = req.body || {};
+    let { display_name } = req.body || {};
 
-    console.log("📥 Raw name:", name, "type:", typeof name);
+    console.log("📥 Raw display_name:", display_name, "type:", typeof display_name);
 
-    if (!name || typeof name !== "string") {
-      console.log("❌ Missing or invalid name");
-      return res.status(400).json({ error: "name is required" });
+    if (!display_name || typeof display_name !== "string") {
+      console.log("❌ Missing or invalid display_name");
+      return res.status(400).json({ error: "display_name is required" });
     }
 
     // Normalize
-    name = name.trim();
+    display_name = display_name.trim();
 
-    console.log("🔍 Normalized name:", name);
+    console.log("🔍 Normalized display_name:", display_name);
 
     const db = await getDb();
     console.log("✅ MongoDB connected");
@@ -34,9 +34,9 @@ export default async function handler(req, res) {
     const users = db.collection("economy");
     console.log("📦 Using collection: economy");
 
-    // Case-insensitive exact match
+    // Case-insensitive EXACT match on display_name
     const query = {
-      name: { $regex: `^${name}$`, $options: "i" }
+      display_name: { $regex: `^${display_name}$`, $options: "i" }
     };
 
     console.log("🔎 Query:", query);
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
     console.log("📤 Query result:", user || "NOT FOUND");
 
-    console.log("==== /getByName END ====");
+    console.log("==== /getByDisplayName END ====");
     return res.json(user || null);
 
   } catch (e) {
